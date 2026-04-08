@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
+    "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "next": "14.2.35",
     "next-auth": "^4.24.13",
+    "pg": "^8.20.0",
     "prisma": "^7.7.0",
     "react": "^18",
     "react-dom": "^18",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/suncalc": "^1.9.2",

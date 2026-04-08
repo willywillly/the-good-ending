@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -7,7 +9,9 @@ declare global {
 
 function getPrisma(): PrismaClient {
   if (!global.__prisma) {
-    global.__prisma = new PrismaClient();
+    const pool = new Pool({ connectionString: process.env.POSTGRES_URL });
+    const adapter = new PrismaPg(pool);
+    global.__prisma = new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);
   }
   return global.__prisma;
 }
