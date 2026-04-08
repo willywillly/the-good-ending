@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/db';
 import { getSolarData, formatTime } from '@/lib/solar';
 import { getWeatherData } from '@/lib/weather';
