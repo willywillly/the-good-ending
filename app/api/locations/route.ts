@@ -3,15 +3,31 @@ import { getNearbySpots } from '@/lib/places';
 import { getSolarData } from '@/lib/solar';
 import { getWeatherData } from '@/lib/weather';
 import { rankLocations } from '@/lib/claude';
+import {
+  applyRateLimit,
+  checkCORS,
+  rateLimiters,
+  validateCoords,
+} from '@/lib/security';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const lat = parseFloat(searchParams.get('lat') ?? '0');
-  const lng = parseFloat(searchParams.get('lng') ?? '0');
+  const corsError = checkCORS(req);
+  if (corsError) return corsError;
 
-  if (!lat || !lng) {
+  const rateLimitError = await applyRateLimit(rateLimiters.locations, req);
+  if (rateLimitError) return rateLimitError;
+
+  const { searchParams } = new URL(req.url);
+
+  const latStr = searchParams.get('lat');
+  const lngStr = searchParams.get('lng');
+  if (!latStr || !lngStr) {
     return NextResponse.json({ error: 'lat and lng required' }, { status: 400 });
   }
+  const lat = parseFloat(latStr);
+  const lng = parseFloat(lngStr);
+  const coordError = validateCoords(lat, lng);
+  if (coordError) return NextResponse.json({ error: coordError }, { status: 400 });
 
   const [spots, solar, weather] = await Promise.all([
     getNearbySpots(lat, lng),

@@ -2,21 +2,48 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSolarData, formatTime } from '@/lib/solar';
 import { getWeatherData } from '@/lib/weather';
 import { computeQualityScore } from '@/lib/score';
+import {
+  applyRateLimit,
+  checkCORS,
+  rateLimiters,
+  validateCoords,
+  validateDate,
+  validateTimezone,
+} from '@/lib/security';
 
 export async function GET(req: NextRequest) {
+  const corsError = checkCORS(req);
+  if (corsError) return corsError;
+
+  const rateLimitError = await applyRateLimit(rateLimiters.sunset, req);
+  if (rateLimitError) return rateLimitError;
+
   const { searchParams } = new URL(req.url);
-  const lat = parseFloat(searchParams.get('lat') ?? '0');
-  const lng = parseFloat(searchParams.get('lng') ?? '0');
-  const tz = searchParams.get('tz') ?? undefined;
 
-  // Accept an optional YYYY-MM-DD date param for fetching tomorrow's data
-  const dateParam = searchParams.get('date');
-  // Parse at noon local time to avoid UTC date boundary issues
-  const date = dateParam ? new Date(`${dateParam}T12:00:00`) : new Date();
-
-  if (!lat || !lng) {
+  const latStr = searchParams.get('lat');
+  const lngStr = searchParams.get('lng');
+  if (!latStr || !lngStr) {
     return NextResponse.json({ error: 'lat and lng required' }, { status: 400 });
   }
+  const lat = parseFloat(latStr);
+  const lng = parseFloat(lngStr);
+  const coordError = validateCoords(lat, lng);
+  if (coordError) return NextResponse.json({ error: coordError }, { status: 400 });
+
+  const tz = searchParams.get('tz') ?? undefined;
+  if (tz) {
+    const tzError = validateTimezone(tz);
+    if (tzError) return NextResponse.json({ error: tzError }, { status: 400 });
+  }
+
+  const dateParam = searchParams.get('date');
+  if (dateParam) {
+    const dateError = validateDate(dateParam);
+    if (dateError) return NextResponse.json({ error: dateError }, { status: 400 });
+  }
+
+  // Parse at noon local time to avoid UTC date boundary issues
+  const date = dateParam ? new Date(`${dateParam}T12:00:00`) : new Date();
 
   const [solar, weather] = await Promise.all([
     getSolarData(lat, lng, date),
