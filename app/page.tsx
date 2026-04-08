@@ -13,8 +13,11 @@ import { LocationPermission } from '@/components/LocationPermission';
 import type { RankedSpot, SpotifyTrack } from '@/lib/claude';
 
 interface SunsetData {
+  sunsetTime: string;
   sunsetTimeFormatted: string;
+  goldenHourStart: string;
   goldenHourStartFormatted: string;
+  goldenHourEnd: string;
   goldenHourEndFormatted: string;
   windowMinutes: number;
   score: number;
