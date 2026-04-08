@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  lat       Float
+  lng       Float
+  region    String
+  createdAt DateTime @default(now())
+}
+
+model SessionLog {
+  id                String   @id @default(cuid())
+  region            String
+  sunsetScore       Int
+  spotRecommended   String
+  mapOpened         Boolean  @default(false)
+  playlistGenerated Boolean  @default(false)
+  fallbackTriggered Boolean  @default(false)
+  createdAt         DateTime @default(now())
+}
