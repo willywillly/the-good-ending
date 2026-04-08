@@ -18,3 +18,13 @@ body {
     text-wrap: balance;
   }
 }
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.sun-rays {
+  transform-origin: 100px 116px; /* matches cx/cy of the sun center in SVG */
+  animation: spin-slow 90s linear infinite;
+}

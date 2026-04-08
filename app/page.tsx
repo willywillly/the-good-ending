@@ -9,6 +9,7 @@ import { LocationList } from '@/components/LocationList';
 import { SpotifyConnect } from '@/components/SpotifyConnect';
 import { LeaveByBar } from '@/components/LeaveByBar';
 import { PushPrompt } from '@/components/PushPrompt';
+import { LocationPermission } from '@/components/LocationPermission';
 import type { RankedSpot, SpotifyTrack } from '@/lib/claude';
 
 interface SunsetData {
@@ -41,14 +42,12 @@ export default function Home() {
   const [locations, setLocations] = useState<RankedSpot[]>([]);
   const [playlist, setPlaylist] = useState<SpotifyTrack[]>([]);
   const [message, setMessage] = useState('Step outside. The sky is doing something tonight.');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setCoords({ lat: 37.7749, lng: -122.4194 }) // SF fallback
-    );
-  }, []);
+  function handleCoords(lat: number, lng: number) {
+    setCoords({ lat, lng });
+    setLoading(true);
+  }
 
   useEffect(() => {
     if (!coords) return;
@@ -82,6 +81,7 @@ export default function Home() {
       .then((d) => setPlaylist(d.tracks ?? []));
   }, [session, coords]);
 
+  if (!coords) return <LocationPermission onCoords={handleCoords} />;
   if (loading) return <LoadingScreen />;
 
   const topSpot = locations[0];
