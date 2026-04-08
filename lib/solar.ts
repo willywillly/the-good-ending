@@ -33,10 +33,11 @@ export function getSolarData(lat: number, lng: number, date: Date = new Date()):
   };
 }
 
-export function formatTime(date: Date): string {
+export function formatTime(date: Date, timeZone?: string): string {
   return date.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    ...(timeZone ? { timeZone } : {}),
   });
 }

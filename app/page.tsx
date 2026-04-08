@@ -43,6 +43,7 @@ export default function Home() {
   const [playlist, setPlaylist] = useState<SpotifyTrack[]>([]);
   const [message, setMessage] = useState('Step outside. The sky is doing something tonight.');
   const [loading, setLoading] = useState(false);
+  const [isTomorrow, setIsTomorrow] = useState(false);
 
   function handleCoords(lat: number, lng: number) {
     setCoords({ lat, lng });
@@ -52,20 +53,39 @@ export default function Home() {
   useEffect(() => {
     if (!coords) return;
     const { lat, lng } = coords;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const fetchSunset = (dateStr?: string) => {
+      const params = new URLSearchParams({ lat: String(lat), lng: String(lng), tz });
+      if (dateStr) params.set('date', dateStr);
+      return fetch(`/api/sunset?${params}`).then((r) => r.json() as Promise<SunsetData>);
+    };
 
     Promise.all([
-      fetch(`/api/sunset?lat=${lat}&lng=${lng}`).then((r) => r.json() as Promise<SunsetData>),
+      fetchSunset(),
       fetch(`/api/locations?lat=${lat}&lng=${lng}`).then((r) => r.json() as Promise<{ locations: RankedSpot[] }>),
     ])
-      .then(([sunset, locationData]) => {
-        setSunsetData(sunset);
+      .then(async ([sunset, locationData]) => {
+        let finalSunset = sunset;
+
+        // If today's sunset has already passed, show tomorrow's instead
+        if (Date.now() > new Date(sunset.sunsetTime).getTime()) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const dateStr = tomorrow.toISOString().split('T')[0];
+          finalSunset = await fetchSunset(dateStr);
+          setIsTomorrow(true);
+        } else {
+          setIsTomorrow(false);
+        }
+
+        setSunsetData(finalSunset);
         setLocations(locationData.locations ?? []);
 
         const top = locationData.locations?.[0];
         if (top) {
           import('@/lib/claude').then(({ writeNightlyMessage }) => {
-            // Build a lightweight spot object for the message
-            writeNightlyMessage(sunset.score, new Date(), top)
+            writeNightlyMessage(finalSunset.score, new Date(), top)
               .then((msg) => setMessage(msg))
               .catch(() => {});
           });
@@ -94,6 +114,7 @@ export default function Home() {
           sunsetTime={sunsetData.sunsetTimeFormatted}
           score={sunsetData.score}
           message={message}
+          isTomorrow={isTomorrow}
         />
       )}
 

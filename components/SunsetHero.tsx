@@ -5,6 +5,7 @@ interface SunsetHeroProps {
   sunsetTime: string;     // actual sunset time
   score: number;          // 0–100
   message: string;        // nightly message from Claude
+  isTomorrow?: boolean;   // true when showing next day's sunset
 }
 
 function ScorePill({ score }: { score: number }) {
@@ -27,7 +28,7 @@ function ScorePill({ score }: { score: number }) {
   );
 }
 
-export function SunsetHero({ beThereBy, sunsetTime, score, message }: SunsetHeroProps) {
+export function SunsetHero({ beThereBy, sunsetTime, score, message, isTomorrow }: SunsetHeroProps) {
   return (
     <div className="flex flex-col items-center text-center px-6 pt-12 pb-8 gap-5">
       {/* Sun orb */}
@@ -45,6 +46,9 @@ export function SunsetHero({ beThereBy, sunsetTime, score, message }: SunsetHero
         <span className="font-mono text-7xl font-light text-amber-100 tracking-tight leading-none">
           {beThereBy}
         </span>
+        {isTomorrow && (
+          <span className="text-[11px] tracking-wide text-amber-200/30 mt-0.5">tomorrow</span>
+        )}
       </div>
 
       {/* Sunset time + score */}
