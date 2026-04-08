@@ -3,7 +3,6 @@ import { prisma } from '@/lib/db';
 import {
   applyRateLimit,
   checkCORS,
-  rateLimiters,
   validateCoords,
 } from '@/lib/security';
 
@@ -13,7 +12,7 @@ export async function POST(req: NextRequest) {
   const corsError = checkCORS(req);
   if (corsError) return corsError;
 
-  const rateLimitError = await applyRateLimit(rateLimiters.pushSubscribe, req);
+  const rateLimitError = await applyRateLimit('pushSubscribe', req);
   if (rateLimitError) return rateLimitError;
 
   const body = await req.json();

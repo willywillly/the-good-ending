@@ -5,7 +5,6 @@ import { computeQualityScore } from '@/lib/score';
 import {
   applyRateLimit,
   checkCORS,
-  rateLimiters,
   validateCoords,
   validateDate,
   validateTimezone,
@@ -15,7 +14,7 @@ export async function GET(req: NextRequest) {
   const corsError = checkCORS(req);
   if (corsError) return corsError;
 
-  const rateLimitError = await applyRateLimit(rateLimiters.sunset, req);
+  const rateLimitError = await applyRateLimit('sunset', req);
   if (rateLimitError) return rateLimitError;
 
   const { searchParams } = new URL(req.url);

@@ -2,45 +2,49 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Vercel KV env var names (KV_REST_API_URL / KV_REST_API_TOKEN).
+// Redis is optional caching — if env vars are absent the app still works.
+function makeRedis(): Redis | null {
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+  try {
+    return new Redis({ url, token });
+  } catch {
+    return null;
+  }
+}
 
-export const rateLimiters = {
-  sunset: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(20, '1 h'),
-    prefix: 'rl:sunset',
-  }),
-  locations: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(20, '1 h'),
-    prefix: 'rl:locations',
-  }),
-  playlist: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(5, '1 h'),
-    prefix: 'rl:playlist',
-  }),
-  pushSubscribe: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(3, '1 h'),
-    prefix: 'rl:push-subscribe',
-  }),
-};
+function makeRateLimiter(redis: Redis, limiter: Ratelimit['limiter'], prefix: string): Ratelimit {
+  return new Ratelimit({ redis, limiter, prefix });
+}
+
+const redis = makeRedis();
+
+export const rateLimiters = redis
+  ? {
+      sunset: makeRateLimiter(redis, Ratelimit.slidingWindow(20, '1 h'), 'rl:sunset'),
+      locations: makeRateLimiter(redis, Ratelimit.slidingWindow(20, '1 h'), 'rl:locations'),
+      playlist: makeRateLimiter(redis, Ratelimit.slidingWindow(5, '1 h'), 'rl:playlist'),
+      pushSubscribe: makeRateLimiter(redis, Ratelimit.slidingWindow(3, '1 h'), 'rl:push-subscribe'),
+    }
+  : null;
 
 function getIP(req: NextRequest): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'anonymous';
 }
 
+// Fails open: if Redis is unavailable or throws, the request is allowed through.
 export async function applyRateLimit(
-  limiter: Ratelimit,
+  key: keyof NonNullable<typeof rateLimiters>,
   req: NextRequest,
 ): Promise<NextResponse | null> {
-  const { success } = await limiter.limit(getIP(req));
-  if (!success) {
-    return new NextResponse('Too many requests', { status: 429 });
+  if (!rateLimiters) return null;
+  try {
+    const { success } = await rateLimiters[key].limit(getIP(req));
+    if (!success) return new NextResponse('Too many requests', { status: 429 });
+  } catch {
+    // Redis error — let the request through rather than blocking the route
   }
   return null;
 }

@@ -7,7 +7,6 @@ import { getSolarData } from '@/lib/solar';
 import {
   applyRateLimit,
   checkCORS,
-  rateLimiters,
   validateCoords,
 } from '@/lib/security';
 
@@ -15,7 +14,7 @@ export async function GET(req: NextRequest) {
   const corsError = checkCORS(req);
   if (corsError) return corsError;
 
-  const rateLimitError = await applyRateLimit(rateLimiters.playlist, req);
+  const rateLimitError = await applyRateLimit('playlist', req);
   if (rateLimitError) return rateLimitError;
 
   const session = await getServerSession(authOptions);

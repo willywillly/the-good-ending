@@ -59,7 +59,7 @@ The app is installable as a PWA. Push notifications are a first-class feature, n
 | AI | Anthropic Claude (`claude-opus-4-6`) | 3 uses: rank spots, write nightly message, sequence playlist |
 | Spotify | Spotify Web API (direct fetch) | Top tracks + audio features for playlist |
 | Database | PostgreSQL via Prisma + pg | Stores push subscriptions + session logs |
-| Rate limiting | Upstash Redis (`@upstash/ratelimit`) | Sliding window limits per route |
+| Rate limiting | Upstash Redis (`@upstash/ratelimit`) | Sliding window limits per route. Reads `KV_REST_API_URL` + `KV_REST_API_TOKEN` (Vercel KV format). Fails open — routes still work if Redis is unavailable. |
 | Push | web-push (VAPID) | PWA push notifications |
 | PWA | Service worker + Web App Manifest | Installable, push-capable |
 | Deployment | Vercel | Cron jobs, serverless functions, Postgres |

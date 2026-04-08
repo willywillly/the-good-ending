@@ -6,7 +6,6 @@ import { rankLocations } from '@/lib/claude';
 import {
   applyRateLimit,
   checkCORS,
-  rateLimiters,
   validateCoords,
 } from '@/lib/security';
 
@@ -14,7 +13,7 @@ export async function GET(req: NextRequest) {
   const corsError = checkCORS(req);
   if (corsError) return corsError;
 
-  const rateLimitError = await applyRateLimit(rateLimiters.locations, req);
+  const rateLimitError = await applyRateLimit('locations', req);
   if (rateLimitError) return rateLimitError;
 
   const { searchParams } = new URL(req.url);
