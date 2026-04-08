@@ -12,6 +12,9 @@ import { PushPrompt } from '@/components/PushPrompt';
 import { LocationPermission } from '@/components/LocationPermission';
 import type { RankedSpot, SpotifyTrack } from '@/lib/claude';
 
+const COORDS_KEY = 'tge_coords';
+const VISITED_KEY = 'tge_visited';
+
 interface SunsetData {
   sunsetTime: string;
   sunsetTimeFormatted: string;
@@ -40,16 +43,48 @@ function LoadingScreen() {
 
 export default function Home() {
   const { data: session } = useSession();
+  const [initialized, setInitialized] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [sunsetData, setSunsetData] = useState<SunsetData | null>(null);
   const [locations, setLocations] = useState<RankedSpot[]>([]);
   const [playlist, setPlaylist] = useState<SpotifyTrack[]>([]);
   const [message, setMessage] = useState('Step outside. The sky is doing something tonight.');
+  const [messageLoading, setMessageLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isTomorrow, setIsTomorrow] = useState(false);
 
+  // BUG 1 FIX: On mount, restore cached coords and skip location screen for returning users
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(COORDS_KEY);
+      const visited = localStorage.getItem(VISITED_KEY);
+      if (cached && visited) {
+        const parsed = JSON.parse(cached) as { lat: number; lng: number };
+        setCoords(parsed);
+        setLoading(true);
+        // Silently refresh geolocation in the background
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const fresh = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+              localStorage.setItem(COORDS_KEY, JSON.stringify(fresh));
+              setCoords(fresh);
+            },
+            () => {} // keep cached coords on failure
+          );
+        }
+      }
+    } catch {}
+    setInitialized(true);
+  }, []);
+
   function handleCoords(lat: number, lng: number) {
-    setCoords({ lat, lng });
+    const c = { lat, lng };
+    try {
+      localStorage.setItem(COORDS_KEY, JSON.stringify(c));
+      localStorage.setItem(VISITED_KEY, 'true');
+    } catch {}
+    setCoords(c);
     setLoading(true);
   }
 
@@ -85,13 +120,24 @@ export default function Home() {
         setSunsetData(finalSunset);
         setLocations(locationData.locations ?? []);
 
+        // BUG 2 FIX: Call /api/message server-side instead of importing lib/claude directly
         const top = locationData.locations?.[0];
         if (top) {
-          import('@/lib/claude').then(({ writeNightlyMessage }) => {
-            writeNightlyMessage(finalSunset.score, new Date(), top)
-              .then((msg) => setMessage(msg))
-              .catch(() => {});
-          });
+          setMessageLoading(true);
+          fetch('/api/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              score: finalSunset.score,
+              goldenHourStart: finalSunset.goldenHourStart,
+              spotName: top.name,
+              spotDistance: top.distanceMiles,
+            }),
+          })
+            .then((r) => r.json() as Promise<{ message: string }>)
+            .then((d) => { if (d.message) setMessage(d.message); })
+            .catch(() => {})
+            .finally(() => setMessageLoading(false));
         }
       })
       .finally(() => setLoading(false));
@@ -104,6 +150,7 @@ export default function Home() {
       .then((d) => setPlaylist(d.tracks ?? []));
   }, [session, coords]);
 
+  if (!initialized) return <LoadingScreen />;
   if (!coords) return <LocationPermission onCoords={handleCoords} />;
   if (loading) return <LoadingScreen />;
 
@@ -117,6 +164,7 @@ export default function Home() {
           sunsetTime={sunsetData.sunsetTimeFormatted}
           score={sunsetData.score}
           message={message}
+          messageLoading={messageLoading}
           isTomorrow={isTomorrow}
         />
       )}

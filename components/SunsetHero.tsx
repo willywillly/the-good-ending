@@ -1,11 +1,12 @@
 'use client';
 
 interface SunsetHeroProps {
-  beThereBy: string;      // golden hour start time
-  sunsetTime: string;     // actual sunset time
-  score: number;          // 0–100
-  message: string;        // nightly message from Claude
-  isTomorrow?: boolean;   // true when showing next day's sunset
+  beThereBy: string;        // golden hour start time
+  sunsetTime: string;       // actual sunset time
+  score: number;            // 0–100
+  message: string;          // nightly message from Claude
+  messageLoading?: boolean; // true while /api/message fetch is in flight
+  isTomorrow?: boolean;     // true when showing next day's sunset
 }
 
 function ScorePill({ score }: { score: number }) {
@@ -28,7 +29,7 @@ function ScorePill({ score }: { score: number }) {
   );
 }
 
-export function SunsetHero({ beThereBy, sunsetTime, score, message, isTomorrow }: SunsetHeroProps) {
+export function SunsetHero({ beThereBy, sunsetTime, score, message, messageLoading, isTomorrow }: SunsetHeroProps) {
   return (
     <div className="flex flex-col items-center text-center px-6 pt-12 pb-8 gap-5">
       {/* Sun orb */}
@@ -38,7 +39,9 @@ export function SunsetHero({ beThereBy, sunsetTime, score, message, isTomorrow }
       </div>
 
       {/* Message */}
-      <p className="text-sm text-amber-200/60 max-w-xs leading-relaxed italic">{message}</p>
+      <p className={`text-sm text-amber-200/60 max-w-xs leading-relaxed italic transition-opacity duration-300 ${messageLoading ? 'opacity-30 animate-pulse' : 'opacity-100'}`}>
+        {message}
+      </p>
 
       {/* Be there by */}
       <div className="flex flex-col items-center gap-1">

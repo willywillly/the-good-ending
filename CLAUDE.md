@@ -177,7 +177,9 @@ endpoint, p256dh, auth, lat, lng, region (often empty string)
 
 ### Known Bugs / Broken
 
-1. **`writeNightlyMessage` is called client-side (bug)** — `page.tsx` dynamically imports `lib/claude.ts` directly in a `'use client'` component. `process.env.ANTHROPIC_API_KEY` is undefined in the browser. The call fails silently (caught by `.catch(() => {})`). The nightly message **always shows the fallback**: `"Step outside. The sky is doing something tonight."` The fix: call `/api/message` (which already exists) instead of importing claude directly.
+1. ~~**Returning users always see the location screen**~~ **FIXED** — `page.tsx` now checks `localStorage` for `tge_coords` + `tge_visited` on mount. If present, coords are restored and `LocationPermission` is skipped. A silent background `getCurrentPosition` call refreshes coords and overwrites cache if successful. `handleCoords` now saves both keys after any successful location grant.
+
+2. ~~**`writeNightlyMessage` is called client-side (bug)**~~ **FIXED** — Replaced dynamic `import('@/lib/claude')` in `page.tsx` with a `POST /api/message` fetch. The server route has access to `ANTHROPIC_API_KEY`. Message shows a pulse animation while the fetch is in-flight (`messageLoading` prop on `SunsetHero`).
 
 2. **Cron timing mismatch** — Vercel cron fires daily at 17:00 UTC. The cron handler only sends push if golden hour is 55–65 min away (i.e., ~18:00–18:05 UTC). This only works for users where golden hour is around 6pm UTC (which is roughly UK/West Africa in summer). For US users (golden hour 8–9pm local), the cron never fires for them. The cron needs to run hourly (e.g., `0 * * * *`), not daily.
 
