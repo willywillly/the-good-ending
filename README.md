@@ -1,4 +1,4 @@
-# Golden
+# The Good Ending
 
 A daily ritual app. It tells you the best nearby spot to watch tonight's sunset, the exact time to be there (golden hour start, not sunset), and builds a personal wind-down playlist from your Spotify listening history.
 

@@ -132,7 +132,7 @@ export function LocationPermission({ onCoords }: Props) {
 
       {stage !== 'denied' ? (
         <div className="flex flex-col items-center w-full">
-          <p className="text-stone-600 text-[10px] tracking-[0.3em] uppercase mb-4">Golden</p>
+          <p className="text-stone-600 text-[10px] tracking-[0.3em] uppercase mb-4">The Good Ending</p>
           <h1 className="text-[#f5e6d3] text-[1.75rem] font-light tracking-tight text-center leading-snug mb-3">
             where will you watch<br />tonight's sunset?
           </h1>

@@ -37,19 +37,19 @@ export async function sendPushNotification(
 export function buildPushMessage(score: number, time: string, spotName: string): PushPayload {
   if (score >= 70) {
     return {
-      title: 'Golden Hour',
+      title: 'The Good Ending',
       body: `Tonight's looking good — ${score}/100. Leave by ${time} to catch the full show.`,
       url: '/',
     };
   } else if (score >= 40) {
     return {
-      title: 'Golden Hour',
+      title: 'The Good Ending',
       body: `Decent sunset tonight — ${score}/100. Worth a quick look from ${spotName}.`,
       url: '/',
     };
   } else {
     return {
-      title: 'Golden Hour',
+      title: 'The Good Ending',
       body: `Sky's not great tonight. We found somewhere worth going anyway.`,
       url: '/',
     };

@@ -15,13 +15,13 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Golden',
+  title: 'The Good Ending',
   description: 'Know where to be for tonight\'s sunset.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Golden',
+    title: 'The Good Ending',
   },
   other: {
     'mobile-web-app-capable': 'yes',

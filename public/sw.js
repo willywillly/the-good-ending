@@ -3,10 +3,10 @@ self.addEventListener('push', function (event) {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: 'Golden', body: event.data ? event.data.text() : '' };
+    data = { title: 'The Good Ending', body: event.data ? event.data.text() : '' };
   }
 
-  const title = data.title || 'Golden';
+  const title = data.title || 'The Good Ending';
   const options = {
     body: data.body || 'Tonight\'s sunset is calling.',
     icon: '/icon-192.png',
